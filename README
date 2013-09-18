@@ -1,0 +1,21 @@
+##INB365 Assignment Two
+
+**Server and Client System for Batting Statistics**
+
+##Specification
+
+###Requirements
+
+- BSD **sockets** for communication
+- Server handles 30 connects
+    - Multithreaded
+- Client asks for **_player name_**
+- Server returns **_totals runs and_**:
+    - Country
+    - Average
+    - High Score
+    - Server returns error on non-exist
+- Server prints no. of queries against every query
+- Client asks for username and password
+- Server authenticated with clients details
+    - Terminates connection if auth fails
