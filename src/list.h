@@ -1,7 +1,7 @@
 // -----------------------------------------------
 // File: list.h
 // Purpose: Implementation of a linked list, with inner
-// var type of void.
+// data type of void.
 // 
 // Author: Lochlan Bunn
 //         n8509719
@@ -17,22 +17,21 @@
 typedef struct node_s *node;
 typedef struct linked_list_s *linked_list;
 struct node_s {
-    void *var;
+    void *data;
     node next;
 };
 struct linked_list_s {
     int count;
-    node first;
-    node last;
+    node head;
+    node tail;
 };
 
-int init_list(linked_list list);
+linked_list create_list(void);
 void destroy_list(linked_list list);
 
 int is_list_empty(linked_list list);
-void *first_var(linked_list list);
-void *last_var(linked_list list);
-int append_var(linked_list list, void *var);
-void drop_first(linked_list list);
+void *head_data(linked_list list);
+int append_data(linked_list list, void *data);
+void drop_head(linked_list list);
 
 #endif

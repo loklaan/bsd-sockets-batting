@@ -1,27 +1,20 @@
 // -----------------------------------------------
-// File: parse.h
-// Purpose: Parse a formatted score or auth file and
-// return its content in a struct.
+// File: resources.h
+// Purpose: Data structures and corresponding
+// functions for use in server/client batting
+// statistics system.
 // 
 // Author: Lochlan Bunn
 //         n8509719
 //------------------------------------------------
 //
 
-#ifndef PARSE_H_
-#define PARSE_H_
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include "list.h"
 
-#define LINEBUF 124
-#define FIELDBUF 32
-
-typedef linked_list scores_db;
-typedef linked_list auths_db;
-
+// =======---------=======
+//     Data Structures
+//
 typedef struct player_stats_s
 {
     char *name;
@@ -39,23 +32,20 @@ typedef struct client_details_s
     char *pass;
 } *client_details;
 
+typedef player_stats* scores_db;
+typedef client_details* auths_db;
+//
+// -------=========-------
+
+// =======---------=======
+//        Functions
+//
+
 /*
-Returns a filled scores_db of a formatted scores text file.
-
-PRE: 
-POST: Returns a scores_db of information parsed
-      If parsing failed, returns NULL
+Allocated space for the 'databases' based on some fixed size.
  */
-scores_db parse_scores(FILE *file);
-
-/*
-Returns a filled auths_db of a formatted authentication text file.
-
-PRE:
-POST: Returns a auths_db of information parsed
-      If parsing failed, returns NULL
- */
-auths_db parse_auths(FILE *file);
+void init_scores_db(scores_db *scores, int size);
+void init_auths_db(scores_db *scores, int size);
 
 /*
 Intializes a player_stats variable.
@@ -91,28 +81,5 @@ POST: client_details allocated memory and pointer freed
  */
 void destroy_client_details(client_details details);
 
-/*
-Searches score_db for a player_stats instance with matching member name
-
-PRE: scores_db must be initialized
-POST: Returns the matching player_stats, or a NULL if not found
- */
-player_stats search_player(scores_db scores, char *name);
-
-/*
-Matches authentication details to details in the auths_db.
-
-PRE: auths_db must be initialized
-POST: Returns 0 if user and pass match an auths_db entry,
-      else returns 1 if not found.
-      Returns -1 if error occured.
- */
-int auth_match(auths_db auths, char *user, char *pass);
-
-// --------------
-// Util Functions
 //
-void print_scores_db(scores_db scores);
-void print_player_stats(player_stats stats);
-
-#endif
+// -------=========-------

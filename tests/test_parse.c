@@ -11,6 +11,8 @@
 scores_db scores;
 auths_db auths;
 
+void print_players(scores_db scores);
+
 int main(int argc, char const *argv[])
 {
     FILE *scores_f;
@@ -44,6 +46,7 @@ int main(int argc, char const *argv[])
      {
         printf("Authentication fail.\n");
      }
+     print_scores_db(scores);
 
     return 0;
 }
