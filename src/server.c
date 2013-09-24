@@ -82,6 +82,8 @@ int main(int argc, char const *argv[])
         {
             // --------------------------------------
             // Checking Authentication / handling
+            int yes = 0;
+            int no = 1;
             client_details *client;
             if ((packet_bytes = recv(sockfd, client, PACKET_SIZE, 0)) == -1)
             {
@@ -90,7 +92,7 @@ int main(int argc, char const *argv[])
             }
             if (auth_match(auths, client->user, client->pass) != 0)
             { // not good, send bad response and close socket
-                if (send(new_fd, 1, 1, 0) == -1)
+                if (send(new_fd, no, sizeof(no), 0) == -1)
                 { // client knows '1' is bad
                     perror("send");
                 }
@@ -98,7 +100,7 @@ int main(int argc, char const *argv[])
                 exit(0);
             } else
             {
-                if (send(new_fd, 0, 1, 0) == -1)
+                if (send(new_fd, yes, sizeof(yes), 0) == -1)
                 { // all good, send good response and continue
                     perror("send");
                     exit(1);
@@ -126,13 +128,18 @@ int main(int argc, char const *argv[])
                 }
                 if ((player = search_player(scores, input)) == NULL)
                 { // player name not found
-                    if (send(new_fd, 1, 1, 0) == -1)
+                    if (send(new_fd, no, size(no), 0) == -1)
                     { // client checks recv size, then if 1
                         perror("send");
                         exit(1);
                     }
                 } else
                 { // player name found
+                    if (send(new_fd, yes, size(yes), 0) == -1)
+                    {
+                        perror("send");
+                        exit(1);
+                    }
                     if (send(new_fd, *player, sizeof(*player), 0) == 0)
                     {
                         perror("send");
