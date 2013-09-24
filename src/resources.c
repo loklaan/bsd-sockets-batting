@@ -11,39 +11,83 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "resources.h"
+#include "dbg.h"
 
 // =======---------=======
 //        Functions
 //
 
-void init_scores_db(scores_db *scores, int size)
+scores_db *create_scores_db(int size)
 {
-    scores_db temp;
-    if ((temp = (scores_db) malloc(sizeof(struct player_stats_s) * size)) == NULL)
+    scores_db *scores;
+    if ((scores = malloc(sizeof(scores_db))) == NULL)
     {
-        printf("Error: malloc in init_scores_db\n");
+        log_err("malloc");
+        return NULL;
     }
+    if ((scores->db = malloc(size * sizeof(player_stats *))) == NULL)
+    {
+        log_err("malloc");
+        return NULL;
+    }
+    for (int i = 0; i < size; ++i)
+    {
+        scores->db[i] = NULL;
+    }
+    scores->size = size;
 
-    *scores = temp;
+    return scores;
 }
 
-void init_auths_db(auths_db *auths, int size)
+auths_db *create_auths_db(int size)
 {
-    auths_db temp;
-    if ((temp = (auths_db) malloc(sizeof(struct client_details_s) * size)) == NULL)
+    auths_db *auths;
+    if ((auths = malloc(sizeof(auths_db))) == NULL)
     {
-        printf("Error: malloc in init_auths_db\n");
+        log_err("malloc");
+        return NULL;
     }
+    if ((auths->db = malloc(size * sizeof(client_details *))) == NULL)
+    {
+        log_err("malloc");
+        return NULL;
+    }
+    for (int i = 0; i < size; ++i)
+    {
+        auths->db[i] = NULL;
+    }
+    auths->size = size;
 
-    *auths = temp;
+    return auths;
 }
 
-player_stats create_player_stats(void)
+void destroy_scores_db(scores_db *scores)
 {
-    player_stats stats;
-    if ((stats = (player_stats) malloc(sizeof(struct player_stats_s))) == NULL)
+    for (int i = 0; i < scores->size; ++i)
     {
-        printf("Error: malloc for create_player_stats\n");
+        destroy_player_stats(scores->db[i]);
+    }
+    free(scores->db);
+    free(scores);
+}
+
+void destroy_auths_db(auths_db *auths)
+{
+    for (int i = 0; i < auths->size; ++i)
+    {
+        destroy_client_details(auths->db[i]);
+    }
+    free(auths->db);
+    free(auths);
+}
+
+player_stats *create_player_stats(void)
+{
+    player_stats *stats;
+    if ((stats = malloc(sizeof(player_stats))) == NULL)
+    {
+        log_err("malloc");
         return NULL;
     }
     stats->name = NULL;
@@ -57,7 +101,7 @@ player_stats create_player_stats(void)
     return stats;
 }
 
-void destroy_player_stats(player_stats stats)
+void destroy_player_stats(player_stats *stats)
 {
     if (stats->name != NULL)
         free(stats->name);
@@ -68,12 +112,12 @@ void destroy_player_stats(player_stats stats)
     free(stats);
 }
 
-client_details create_client_details(void)
+client_details *create_client_details(void)
 {
-    client_details details;
-    if ((details = (client_details) malloc(sizeof(struct client_details_s))) == NULL)
+    client_details *details;
+    if ((details = malloc(sizeof(client_details))) == NULL)
     {
-        printf("Error: malloc for create_client_details\n");
+        log_err("malloc");
         return NULL;
     }
     details->user = NULL;
@@ -82,7 +126,7 @@ client_details create_client_details(void)
     return details;
 }
 
-void destroy_client_details(client_details details)
+void destroy_client_details(client_details *details)
 {
     if (details->user != NULL)
         free(details->user);
@@ -91,6 +135,27 @@ void destroy_client_details(client_details details)
         free(details->pass);
 
     free(details);
+}
+
+// === Utils ===
+void print_player_stats(player_stats *stats)
+{
+    printf("\nPlayer stats for %s:\n", stats->name);
+    printf("\tCountry: %s\n", stats->country);
+    printf("\tInnings: %d\n", stats->innings);
+    printf("\tAvg Runs: %d\n", (stats->runs / stats->innings));
+    printf("\tBest Run: %d\n", stats->highscore);
+    printf("\tTotal Runs: %d\n", stats->runs);
+    printf("\tNot Outs: %d\n", stats->not_out);
+    char *best_not_out = (stats->highscore_not_out == 1) ? "TRUE" : "FALSE";
+    printf("\tBest Run was Not Out: %s\n", best_not_out);
+}
+
+void print_client_details(client_details *details)
+{
+    printf("\nValid authentication:\n");
+    printf("\tUser: %s\n", details->user);
+    printf("\tPass: %s\n", details->pass);
 }
 
 //

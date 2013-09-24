@@ -1,7 +1,7 @@
 CC=gcc -std=gnu99
-DEBUG_CFLAGS=-g
+DEBUG_CFLAGS=-g -Wall
 LDFLAGS=-lrt
-SOURCE=../src/parse.h ../src/parse.c ../src/list.h ../src/list.c
+SOURCE=../src/parse.h ../src/parse.c ../src/resources.h ../src/resources.c
 
 all: parse
 
@@ -10,5 +10,8 @@ parse:
 
 clean:
 	rm -f test_parse
- 
-.PHONY: clean
+
+valgrind-parse: parse
+	valgrind --leak-check=full --show-reachable=yes --track-origins=yes ./test_parse
+
+.PHONY: clean valgrind-parse
