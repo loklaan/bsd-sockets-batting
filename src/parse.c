@@ -115,34 +115,6 @@ auths_db *parse_auths(FILE *file)
 	return auths;
 }
 
-player_stats *search_player(scores_db *scores, char *name)
-{
-	// linear search
-	for (int i = 0; i < scores->size; ++i)
-	{
-		if (strcmp((scores->db[i])->name, name))
-		{
-			return scores->db[i];
-		}
-	}
-
-	return NULL;
-}
-
-int auth_match(auths_db *auths, char *user, char *pass)
-{
-	// linear search
-	for (int i = 0; i < auths->size; ++i)
-	{
-		if (strcmp((auths->db[i])->user, user) && strcmp((auths->db[i])->pass, pass))
-		{
-			return 0;
-		}
-	}
-
-	return 1;
-}
-
 int count_players(FILE *file)
 {
 	int count = 0;

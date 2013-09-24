@@ -138,6 +138,34 @@ void destroy_client_details(client_details *details)
 }
 
 // === Utils ===
+player_stats *search_player(scores_db *scores, char *name)
+{
+    // linear search
+    for (int i = 0; i < scores->size; ++i)
+    {
+        if (strcmp((scores->db[i])->name, name))
+        {
+            return scores->db[i];
+        }
+    }
+
+    return NULL;
+}
+
+int auth_match(auths_db *auths, char *user, char *pass)
+{
+    // linear search
+    for (int i = 0; i < auths->size; ++i)
+    {
+        if (strcmp((auths->db[i])->user, user) && strcmp((auths->db[i])->pass, pass))
+        {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 void print_player_stats(player_stats *stats)
 {
     printf("\nPlayer stats for %s:\n", stats->name);

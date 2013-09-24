@@ -99,6 +99,26 @@ POST: client_details allocated memory and pointer freed
 void destroy_client_details(client_details *details);
 
 // === Utils ===
+/*
+Searches score_db for a player_stats instance with matching member name
+
+PRE: scores_db must be initialized
+POST: Returns the matching player_stats, or a NULL if not found
+ */
+player_stats *search_player(scores_db *scores, char *name);
+
+/*
+Matches authentication details to details in the auths_db.
+
+PRE: auths_db must be initialized
+POST: Returns 0 if user and pass match an auths_db entry,
+      else returns 1 if not found.
+ */
+int auth_match(auths_db *auths, char *user, char *pass);
+
+/*
+Prints things.
+ */
 void print_player_stats(player_stats *stats);
 void print_client_details(client_details *details);
 
