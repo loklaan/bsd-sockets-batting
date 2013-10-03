@@ -16,14 +16,17 @@
 #include <netinet/in.h>
 #include <unistd.h>
 #include "resources.h"
+#include "console.h"
 
-#define PORT 42422
-#define PACKET_SIZE 128
+#define PORT 42420
+#define PACKET_SIZE 256
 #define HOST "127.0.0.1"
+#define YES 0
+#define NO 1
 
 int main(int argc, char const *argv[])
 {
-    printf("...Started batting statistics client...\n");
+    msg("Started batting statistics client");
 
     // initialise socket objects
     int sockfd, packet_bytes;
@@ -31,13 +34,13 @@ int main(int argc, char const *argv[])
     struct sockaddr_in their_addr;
     if ((he = gethostbyname(HOST)) == NULL)
     {
-        herror("gethosebyname");
+        log_err("gethostbyname");
         exit(1);
     }
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        perror("socket");
+        log_err("socket");
         exit(1);
     }
     their_addr.sin_family = AF_INET;
@@ -46,42 +49,49 @@ int main(int argc, char const *argv[])
     bzero(&(their_addr.sin_zero), 8);
     if (connect(sockfd, (struct sockaddr *) &their_addr, sizeof(struct sockaddr)) == -1)
     {
-        perror("connect");
+        log_err("connect");
         exit(1);
     }
-    printf("Client: Connected to server at %s\n", inet_ntoa(their_addr.sin_addr));
+    msg_client("Connected to server at %s", inet_ntoa(their_addr.sin_addr));
 
     // ----- client logic -----
     // send entered client user / pass
-    char input[PACKET_SIZE / 2];
-    int boolean = -1;
+    char input[PACKET_SIZE / 4];
+    int boolean = NO;
     client_details details;
-    printf("Enter server authentication details...\n");
+    printf("\nEnter client authentication details.\n");
     printf("User: ");
     scanf("%s", input);
-    details.user = strdup(input);
+    strcpy(details.user, input);
+    input[0] = '\0';
     printf("Pass: ");
     scanf("%s", input);
-    details.pass = strdup(input);
+    printf("\n");
+    strcpy(details.pass, input);
+    input[0] = '\0';
+    msg_client("Sending client authentication details")
     if (send(sockfd, &details, sizeof(details), 0) == -1)
     {
-        perror("send");
+        log_err("send client details");
         exit(1);
     }
+    msg_client("Size of sent packet: %d", (int)sizeof(details));
     if ((packet_bytes = recv(sockfd, &boolean, PACKET_SIZE, 0)) == -1)
     {
-        perror("recv");
+        log_err("recv auth validity");
         exit(1);
     }
+    msg_client("Size of recieved packet: %d", packet_bytes);
     // continue, or force close
-    if (boolean == 1)
+    if (boolean == NO)
     {
-        printf("Invalid authentication details.\n...Closing client...\n");
+        msg_server("Invalid client authentication details");
+        msg("Quitting client");
         close(sockfd);
         return 0;
-    } else if (boolean == 0)
+    } else if (boolean == YES)
     {
-        printf("Approval received. Valid authentication.\n");
+        msg_server("Valid client authentication details.");
     }
     // loop
     char *quit = "q";
@@ -89,41 +99,44 @@ int main(int argc, char const *argv[])
     {
         //    enter q to quit at anytime
         //    enter player name
-        printf("Enter a players name, or q to quit: ");
+        printf("\nEnter a players name, or q to quit: ");
         scanf("%s", input);
         if (send(sockfd, input, sizeof(input), 0) == -1)
         {
-            perror("send");
+            log_err("send player name / quit input");
             exit(1);
         }
-        printf("Input: %s\n", input);
-        if (strcmp(input, quit))
+        msg_client("Size of sent packet: %d", (int)sizeof(input));
+        if (strcmp(input, quit) == 0)
         {
-            printf("Quitting client...\n");
+            msg_client("User has chosen to quit");
             close(sockfd);
             break;
         }
         if ((packet_bytes = recv(sockfd, &boolean, PACKET_SIZE, 0)) == -1)
         {
-            perror("recv");
+            log_err("recv player name validity");
             exit(1);
         }
-        if (boolean == 0)
+        msg_client("Size of recieved packet: %d", packet_bytes);
+        if (boolean == YES)
         {
-            printf("Player %s found.\n", input);
-            player_stats *stats;
-            if ((packet_bytes = recv(sockfd, stats, PACKET_SIZE, 0)) == -1)
-            {
-                perror("recv");
+            msg_server("Player %s was found", input);
+            player_stats stats;
+            if ((packet_bytes = recv(sockfd, &stats, PACKET_SIZE, 0)) == -1)
+            { // TODO: screwing up sometimes....
+                log_err("recv player stats");
                 exit(1);
             }
-            print_player_stats(stats);
+            msg_client("Size of recieved packet: %d", packet_bytes);
+            print_player_stats(&stats);
         } else
         {
-            printf("Player %s not found.\n", input);
+            msg_server("Player %s was not found", input);
         }
+        input[0] = '\0';
     }
     
-    printf("...Closing client...\n");
+    msg_client("Closing client");
     return 0;
 }

@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "resources.h"
-#include "dbg.h"
+#include "console.h"
 
 // =======---------=======
 //        Functions
@@ -35,6 +35,7 @@ scores_db *create_scores_db(int size)
     {
         scores->db[i] = NULL;
     }
+    scores->last_found_index = 0;
     scores->size = size;
 
     return scores;
@@ -90,8 +91,8 @@ player_stats *create_player_stats(void)
         log_err("malloc");
         return NULL;
     }
-    stats->name = NULL;
-    stats->country = NULL;
+    stats->name[0] = '\0';
+    stats->country[0] = '\0';
     stats->innings = 0;
     stats->runs = 0;
     stats->not_out = 0;
@@ -103,12 +104,6 @@ player_stats *create_player_stats(void)
 
 void destroy_player_stats(player_stats *stats)
 {
-    if (stats->name != NULL)
-        free(stats->name);
-
-    if (stats->country != NULL)
-        free(stats->country);
-
     free(stats);
 }
 
@@ -120,20 +115,14 @@ client_details *create_client_details(void)
         log_err("malloc");
         return NULL;
     }
-    details->user = NULL;
-    details->pass = NULL;
+    details->user[0] = '\0';
+    details->pass[0] = '\0';
 
     return details;
 }
 
 void destroy_client_details(client_details *details)
 {
-    if (details->user != NULL)
-        free(details->user);
-
-    if (details->pass != NULL)
-        free(details->pass);
-
     free(details);
 }
 
@@ -143,8 +132,9 @@ player_stats *search_player(scores_db *scores, char *name)
     // linear search
     for (int i = 0; i < scores->size; ++i)
     {
-        if (strcmp((scores->db[i])->name, name))
+        if (strcmp((scores->db[i])->name, name) == 0)
         {
+            scores->last_found_index = i;
             return scores->db[i];
         }
     }
@@ -154,15 +144,19 @@ player_stats *search_player(scores_db *scores, char *name)
 
 int auth_match(auths_db *auths, char *user, char *pass)
 {
-    // linear search
+    int bool_user, bool_pass;
     for (int i = 0; i < auths->size; ++i)
     {
-        if (strcmp((auths->db[i])->user, user) && strcmp((auths->db[i])->pass, pass))
+        bool_user = strcmp((auths->db[i])->user, user);
+        bool_pass = strcmp((auths->db[i])->pass, pass);
+        if (bool_user == 0)
         {
-            return 0;
+            if (bool_pass == 0)
+            {
+                return 0;
+            }
         }
     }
-
     return 1;
 }
 

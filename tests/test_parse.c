@@ -38,8 +38,8 @@ int main(int argc, char const *argv[])
     }
 
     client_details details;
-    details.user = "Jason";
-    details.pass = "222222";
+    strcpy(details.user, "Jason");
+    strcpy(details.pass, "222222");
     printf("\n...Matching authentication for: %s - %s\n", details.user, details.pass);
     if (auth_match(auths, details.user, details.pass) == 0)
     {
@@ -47,6 +47,12 @@ int main(int argc, char const *argv[])
     } else
     {
         printf("Authentication fail.\n");
+    }
+
+    printf("...Printing all client details.n");
+    for (int i = 0; i < auths->size; ++i)
+    {
+        print_client_details(auths->db[i]);
     }
 
     printf("\n...Destroying 'databases'\n");

@@ -16,21 +16,25 @@
 #include <unistd.h>
 #include "parse.h"
 #include "resources.h"
+#include "console.h"
 
 #define SCORES_FILE "res/Batting.txt"
 #define AUTHS_FILE "res/Authentication.txt"
-#define PORT 42422
+#define PORT 42420
 #define CLIENT_QUEUE 30
-#define PACKET_SIZE 128
+#define PACKET_SIZE 256
+#define YES 0
+#define NO 1
 
 scores_db *scores;
 auths_db *auths;
+int *player_queries;
 
 int listener(int socket_descr);
 
 int main(int argc, char const *argv[])
 {
-    printf("...Started batting statistics server...\n");
+    msg_server("Started batting statistics server");
 
     // initialise files / parsed objects
     FILE *scores_f;
@@ -40,6 +44,12 @@ int main(int argc, char const *argv[])
     scores = parse_scores(scores_f);
     auths = parse_auths(auths_f);
 
+    if ((player_queries = calloc(scores->size, sizeof(scores->last_found_index))) == NULL)
+    {
+        log_err("calloc player_queries");
+        exit(1);
+    }
+
     // initialise socket objects
     int sockfd, new_fd, packet_bytes;
     struct sockaddr_in my_addr;
@@ -48,7 +58,7 @@ int main(int argc, char const *argv[])
 
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
-        perror("socket");
+        log_err("socket");
         exit(1);
     }
     my_addr.sin_family = AF_INET;
@@ -61,7 +71,7 @@ int main(int argc, char const *argv[])
     {
         if ((err = bind(sockfd, (struct sockaddr *) &my_addr, sizeof(struct sockaddr))) == -1)
         {
-            perror("bind");
+            log_err("bind");
             exit(1);
         }
     }
@@ -69,104 +79,128 @@ int main(int argc, char const *argv[])
     // start listener
     if (listen(sockfd, CLIENT_QUEUE) == -1)
     {
-        perror("listen");
+        log_err("listen");
         exit(1);
     }
 
-    printf("...Listening on port %d...\n", PORT);
+    msg_server("Listening on port %d", PORT);
     while (1)
     {
-        char client_id[PACKET_SIZE / 2];
-        sprintf(client_id, "%d", rand());
+        fflush(stdout);
+        char client_id[PACKET_SIZE / 4];
 
         sin_size = sizeof(struct sockaddr_in);
         if ((new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &sin_size)) == -1)
         {
-            perror("accept");
+            log_err("accept");
             continue;
         }
-        printf("...Accepted client %s connection from %s...\n", client_id, inet_ntoa(their_addr.sin_addr));
-        if (!fork())
+        msg_server("Accepted client connection from %s", inet_ntoa(their_addr.sin_addr));
+        int pid = -1;
+        if ((pid = fork()) == 0)
         {
+            msg_client_cpid("Forked client connection");
+            sprintf(client_id, "%d", getpid());
             // --------------------------------------
             // Checking Authentication / handling
             int yes = 0;
             int no = 1;
-            client_details *client;
-            if ((packet_bytes = recv(new_fd, client, PACKET_SIZE, 0)) == -1)
+            client_details client;
+            if ((packet_bytes = recv(new_fd, &client, PACKET_SIZE, 0)) == -1)
             {
-                printf("FASJDN\n");
-                perror("recv");
+                log_err("recv client details");
                 exit(1);
             }
-            if (auth_match(auths, client->user, client->pass) != 0)
-            { // not good, send bad response and close socket
-                printf("\t...Client %s had bad authentication.\n Closing connection...\n", client_id);
-                if (send(new_fd, &no, sizeof(no), 0) == -1)
-                { // client knows '1' is bad
-                    perror("send");
-                }
-                close(new_fd);
-                exit(0);
-            } else
-            {
-                printf("\t...Client %s had good authentication.\n Sending approval...\n", client_id);
+            msg_client_cpid("Size of recieved packet: %d", packet_bytes);
+            if (auth_match(auths, client.user, client.pass) == 0)
+            { // all good, send good response and continue
+                msg_client_cpid("Valid client details");
+                msg_client_cpid("Sending authentication approval");
                 if (send(new_fd, &yes, sizeof(yes), 0) == -1)
-                { // all good, send good response and continue
-                    perror("send");
+                {
+                    log_err("send good auth");
                     exit(1);
                 }
-            } // continue
+                msg_server_cpid("Size of sent packet: %d", (int)sizeof(yes))
+            } else
+            { // not good, send bad response and close socket
+                msg_client_cpid("Invalid client details");
+                msg_client_cpid("Sending authentication disaproval");
+                if (send(new_fd, &no, sizeof(no), 0) == -1)
+                { // client knows '1' is bad
+                    log_err("send bad auth");
+                }
+                msg_server_cpid("Size of sent packet: %d", (int)sizeof(no))
+                msg_client_cpid("Closing connection");
+                close(new_fd);
+                exit(0);
+            } // continue with battings query...
             //
             // --------------------------------------
 
             // --------------------------------------
-            // Checking for player / handling
+            // Checking for player name / handling valid request
             while(1)
             {
-                char input[PACKET_SIZE / 2]; // smaller size for name
                 player_stats *player;
+                char input[PACKET_SIZE / 4]; // smaller size for name
                 if ((packet_bytes = recv(new_fd, input, PACKET_SIZE, 0)) == -1)
                 {
-                    perror("recv");
+                    log_err("recv player name");
                     exit(1);
                 }
-                input[packet_bytes] = '\0';
-                if (strcmp(input, "q"))
+                msg_client_cpid("Size of recieved packet: %d", packet_bytes);
+                msg_client_cpid("Player name recieved: %s", input)
+                // input[packet_bytes] = '\0';
+                if (strcmp(input, "q") == 0)
                 { // close connection if client quits
-                    printf("Client %s quit.\nClosing connection.\n", client_id);
+                    msg_client_cpid("User has chosen to quit");
+                    msg_client_cpid("Closing connection");
                     close(new_fd);
                     exit(0);
                 }
-                // TODO: add task 2 from asgn spec
                 if ((player = search_player(scores, input)) == NULL)
                 { // player name not found
+                    msg_server("Player %s was not found", input);
                     if (send(new_fd, &no, sizeof(no), 0) == -1)
                     { // client checks recv size, then if 1
-                        perror("send");
+                        log_err("send bad player name");
                         exit(1);
                     }
+                    msg_server_cpid("Size of sent packet: %d", (int)sizeof(no))
                 } else
                 { // player name found
+                    msg_server("Player %s was found", player->name);
+                    // TODO: add task 2 from asgn spec
+                    // I think this does it?1
+                    msg_server("Player %s queried %d times", player->name, ++player_queries[scores->last_found_index]);
+                    ;
                     if (send(new_fd, &yes, sizeof(yes), 0) == -1)
                     {
-                        perror("send");
+                        log_err("send good player name");
                         exit(1);
                     }
+                    msg_server_cpid("Size of sent packet: %d", (int)sizeof(yes))
                     if (send(new_fd, player, sizeof(*player), 0) == 0)
                     {
-                        perror("send");
+                        log_err("send player_stats");
                         exit(1);
                     }
+                    msg_server_cpid("Size of sent packet: %d", (int)sizeof(*player))
                 }
             }
             //
             // --------------------------------------
+        } else
+        {
+            sleep(1); // forced sequential prints. may prove problematic for further connection establishment
+            msg_server("Cutting ties to client from %s", inet_ntoa(their_addr.sin_addr));
+            // fflush(stdout);
+            close(new_fd);
         }
-        close(new_fd);
     }
 
 
-    printf("Finished batting statistics server...\n");
+    msg_server("Finished batting statistics server");
     return 0;
 }

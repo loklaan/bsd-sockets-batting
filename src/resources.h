@@ -12,6 +12,8 @@
 #ifndef RESOURCES_H_
 #define RESOURCES_H_
 
+#define MEMBUF 64 // struct member buff for structs strings
+
 #include <stdio.h>
 
 // =======---------=======
@@ -19,8 +21,8 @@
 //
 typedef struct
 {
-    char *name;
-    char *country;
+    char name[MEMBUF];
+    char country[MEMBUF];
     int innings;
     int runs;
     int not_out;
@@ -30,13 +32,14 @@ typedef struct
 
 typedef struct
 {
-    char *user;
-    char *pass;
+    char user[MEMBUF];
+    char pass[MEMBUF];
 } client_details;
 
 typedef struct
 {
     player_stats **db;
+    int last_found_index;
     int size;
 } scores_db;
 
@@ -103,7 +106,7 @@ void destroy_client_details(client_details *details);
 Searches score_db for a player_stats instance with matching member name
 
 PRE: scores_db must be initialized
-POST: Returns the matching player_stats, or a NULL if not found
+POST: Returns the pointer to the matching player_stats, or a NULL if not found
  */
 player_stats *search_player(scores_db *scores, char *name);
 

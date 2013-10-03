@@ -15,9 +15,9 @@
 #include <string.h>
 #include "parse.h"
 #include "resources.h"
-#include "dbg.h"
+#include "console.h"
 
-#define DELIMS "\t\n"
+#define DELIMS " \t\r\n"
 
 scores_db *parse_scores(FILE *file)
 {
@@ -40,10 +40,10 @@ scores_db *parse_scores(FILE *file)
 				switch (field_count)
 				{
 					case 0 :
-					player->name = strdup(field);
+					strcpy(player->name, field);
 					break;
 					case 1 :
-					player->country = strdup(field);
+					strcpy(player->country, field);
 					break;
 					case 2 :
 					player->innings = atoi(field);
@@ -95,10 +95,10 @@ auths_db *parse_auths(FILE *file)
 			switch (field_count)
 			{
 				case 0 :
-				details->user = strdup(field);
+				strcpy(details->user, field);
 				break;
 				case 1 :
-				details->pass = strdup(field);
+				strcpy(details->pass, field);
 				break;
 				default :
 				log_info("field_count for parse_auths is out of bounds");

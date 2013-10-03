@@ -1,15 +1,13 @@
-//
-// Copyright
-// http://c.learncodethehardway.org/book/ex20.html
-//
-
-#ifndef __dbg_h__
-#define __dbg_h__
+#ifndef __CONSOLE_H__
+#define __CONSOLE_H__
 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 
+// ---------------------------------
+// Debug Prints
+// 
 #ifdef NDEBUG
 #define debug(M, ...)
 #else
@@ -33,3 +31,18 @@
 #define check_debug(A, M, ...) if(!(A)) { debug(M, ##__VA_ARGS__); errno=0; goto error; }
 
 #endif
+//
+// ---------------------------------
+
+
+
+// ---------------------------------
+//  Message Prints
+//
+#define msg(M, ...) printf("[MSG] " M "...\n", ##__VA_ARGS__);
+#define msg_client_cpid(M, ...) printf("[CLIENT_MSG:%d] " M "...\n", getpid(), ##__VA_ARGS__);
+#define msg_server_cpid(M, ...) printf("[CLIENT_MSG:%d] " M "...\n", getpid(), ##__VA_ARGS__);
+#define msg_server(M, ...) printf("[SERVER_MSG] " M "...\n", ##__VA_ARGS__);
+#define msg_client(M, ...) printf("[CLIENT_MSG] " M "...\n", ##__VA_ARGS__);
+//
+// ---------------------------------
