@@ -16,6 +16,10 @@
 
 #define LINEBUF 124
 
+// =======---------=======
+//        Functions
+//
+
 /*
 Returns a fixed size scores_db of a formatted scores
 parsed from a text file.
@@ -35,10 +39,14 @@ POST: Returns a auths_db of information parsed
       If parsing failed, returns NULL
  */
 auths_db *parse_auths(FILE *file);
-
-// --------------
-// Util Functions
 //
+// -------=========-------
+
+
+// =======---------=======
+//          Utils
+//
+
 /*
 Counts the number of lines that have player stats.
 
@@ -54,5 +62,7 @@ PRE: file must be opened.
 POST: the number of times an authentication entry occured is return
  */
 int count_auths(FILE *file);
+//
+// -------=========-------
 
-#endif
+#endif /* PARSE_H_ */

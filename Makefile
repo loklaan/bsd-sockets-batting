@@ -1,22 +1,34 @@
-CC=gcc -std=gnu99 -pthread
-DEBUG_CFLAGS=-g
+# Makefile for things and kittens.
+
+CC=@gcc -std=gnu99 $(LFLAGS)
+LFLAGS=-pthread
+DFLAGS=-g
 SOURCE=src/parse.h src/parse.c src/resources.h src/resources.c src/console.h
+CLIENTS=1
 
 all: debug
+
+# quick execute target. change 'all' req to debug/release.
+# usage:
+# make run <CLIENT=#>
+run: all
+	@/usr/bin/gnome-terminal --window --title="Server" -e ./bin/server; \
+	bash -c \
+	"\
+		for (( i=0; i<$(CLIENTS); i++ )) ; do \
+			/usr/bin/gnome-terminal --window --title=Client -e ./bin/client ; \
+		done\
+	"
 
 debug: server-dbg client-dbg
 
 release: server-release client-release
 
-# CHANGE RUN TARGET FOR KITTENS
-run: release
-	/usr/bin/gnome-terminal --window --profile="Persistent" --title="Server" -e ./bin/server; /usr/bin/gnome-terminal --window --profile="Persistent" --title="Client" -e ./bin/client
-
 server-dbg:
-	$(CC) $(DEBUG_CFLAGS) -o ./bin/server ./src/server.c $(SOURCE)
+	$(CC) $(DFLAGS) -o ./bin/server ./src/server.c $(SOURCE)
 
 client-dbg:
-	$(CC) $(DEBUG_CFLAGS) -o ./bin/client ./src/client.c $(SOURCE)
+	$(CC) $(DFLAGS) -o ./bin/client ./src/client.c $(SOURCE)
 
 server-release:
 	$(CC) -DNDEBUG -o ./bin/server ./src/server.c $(SOURCE)

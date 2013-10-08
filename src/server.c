@@ -1,6 +1,7 @@
 // -----------------------------------------------
 // File: server.c
-// Purpose: Server for the Batting Stats system.
+// Purpose: Server implementation for the Batting Stats system.
+// Uses BSD sockets with pthreads for multithreaded performance.
 // 
 // Author: Lochlan Bunn
 //         n8509719
@@ -21,18 +22,25 @@
 
 #define SCORES_FILE "res/Batting.txt"
 #define AUTHS_FILE "res/Authentication.txt"
-#define PORT 42420
+#define PORT 42424
 #define CLIENT_QUEUE 30
 #define PACKET_SIZE 256
 #define FALSE 1
 
 scores_db *scores;
 auths_db *auths;
-int *player_queries;
+int *player_queries, client_connects = 0;
 pthread_mutex_t mutex;
 
 void *client_thread(void *arg);
 
+/*
+Server will accept any client that, after connecting, sends correct
+authentication details. The server will the dish out batting statistics
+for players that clients query for.
+
+The server has a maximum cap for concurrent client connections.
+ */
 int main(int argc, char const *argv[])
 {
 
@@ -87,6 +95,7 @@ int main(int argc, char const *argv[])
     }
 
     // start listener
+    // the CLIENT_QUEUE is only a 'hint', and is not enforced by linux
     if (listen(server_s, CLIENT_QUEUE) == -1)
     {
         log_err("listen");
@@ -105,6 +114,7 @@ int main(int argc, char const *argv[])
         } else {
             msg_server("Accepted client connection from %s", inet_ntoa(client_addr.sin_addr));
 
+            // moves off the client work to a new thread
             pthread_create(&threads, &attr, client_thread, &client_s);
         }
     }
@@ -114,14 +124,26 @@ int main(int argc, char const *argv[])
 
 }
 
+/*
+A thread function for handling queries that the client makes to the server.
+
+PRE: The socket, that is the parameter, must have successfully connected
+    to some client.
+POST: Gracefully exits the thread once user inputs 'quit', or any error occurs.
+    What not handled is unexpected systems signals, like terminals `ctrl+c`,
+    that will crash the client (and probably the server,
+    if it is waiting for packet).
+ */
 void *client_thread(void *arg)
 {
     int thread_s = *(int*) arg;
+    int client_id = client_connects++;
     int packet_bytes = 0;
-    dbg_client_id("New client process");
 
-    // --------------------------------------
-    // Checking Authentication / handling
+    dbg_client_id(client_id, "New client process");
+
+    // --------------------
+    // Authentication check
     int yes = 0;
     int no = 1;
     client_details client;
@@ -130,81 +152,92 @@ void *client_thread(void *arg)
         log_err("recv client details");
         pthread_exit(NULL);
     }
-    dbg_client_id("Size of recieved packet: %d", packet_bytes);
+    dbg_client_id(client_id, "Size of recieved packet: %d", packet_bytes);
+    // all good, send good response and continue
     if (auth_match(auths, client.user, client.pass) == 0)
-    { // all good, send good response and continue
-        dbg_client_id("Valid client details");
-        dbg_client_id("Sending authentication approval");
+    {
+        dbg_client_id(client_id, "Valid client details");
+        dbg_client_id(client_id, "Sending authentication approval");
         if (send(thread_s, &yes, sizeof(yes), 0) == -1)
         {
             log_err("send good auth");
             pthread_exit(NULL);
         }
-        dbg_client_id("Size of sent packet: %d", (int)sizeof(yes));
-    } else { // not good, send bad response and close socket
-        msg_client_id("Invalid client details");
-        dbg_client_id("Sending authentication disaproval");
+        dbg_client_id(client_id, "Size of sent packet: %d", (int)sizeof(yes));
+    // not good, send bad response and close socket
+    } else {
+        msg_client_id(client_id, "Invalid client details");
+        dbg_client_id(client_id, "Sending authentication disaproval");
         if (send(thread_s, &no, sizeof(no), 0) == -1)
-        { // client knows '1' is bad
+        {
             log_err("send bad auth");
         }
-        dbg_client_id("Size of sent packet: %d", (int)sizeof(no));
-        msg_server("Closing connection from client %d", (int) pthread_self());
+        dbg_client_id(client_id, "Size of sent packet: %d", (int)sizeof(no));
+        msg_server("Closing connection from Client %d", client_id);
         close(thread_s);
         pthread_exit(NULL);
-    } // continue with battings query...
-    //
-    // --------------------------------------
+    }
+    // END Authentication check
+    // ------------------------
 
-    // --------------------------------------
-    // Checking for player name / handling valid request
+    // --------------------------------
+    // Player name check
     while(1)
     {
         player_stats *player;
-        char input[PACKET_SIZE / 4]; // smaller size for name
+        char input[PACKET_SIZE / 4]; // smaller size for name name
         if ((packet_bytes = recv(thread_s, input, PACKET_SIZE, 0)) == -1)
         {
             log_err("recv player name");
             pthread_exit(NULL);
         }
-        dbg_client_id("Size of recieved packet: %d", packet_bytes);
-        dbg_client_id("Player name recieved: %s", input);
-        // input[packet_bytes] = '\0';
+        dbg_client_id(client_id, "Size of recieved packet: %d", packet_bytes);
+        dbg_client_id(client_id, "Player name recieved: %s", input);
+        // Closes connection if client inputs quit 
         if (strcmp(input, "q") == 0)
-        { // close connection if client quits
-            msg_client_id("User has chosen to quit");
-            msg_server("Closing connection from client %d", (int) pthread_self());
+        {
+            msg_client_id(client_id, "User has chosen to quit");
+            msg_server("Closing connection from Client %d", client_id);
             close(thread_s);
             pthread_exit(NULL);
         }
+        // player name NOT found
         if ((player = search_player(scores, input)) == NULL)
-        { // player name not found
-            dbg_client_id("Player '%s' was not found", input);
+        {
+            dbg_client_id(client_id, "Player '%s' was not found", input);
+
             if (send(thread_s, &no, sizeof(no), 0) == -1)
             { // client checks recv size, then if 1
                 log_err("send bad player name");
                 pthread_exit(NULL);
             }
-            dbg_client_id("Size of sent packet: %d", (int)sizeof(no));
-        } else { // player name found
-            dbg_client_id("Player '%s' was found", player->name);
+            dbg_client_id(client_id, "Size of sent packet: %d", (int)sizeof(no));
+        // player name found
+        } else {
+            dbg_client_id(client_id, "Player '%s' was found", player->name);
+
             pthread_mutex_lock(&mutex);
             msg_server("Player %s queried %d times", player->name, ++player_queries[scores->last_found_index]);
             pthread_mutex_unlock(&mutex);
-            ;
+
             if (send(thread_s, &yes, sizeof(yes), 0) == -1)
             {
                 log_err("send good player name");
                 pthread_exit(NULL);
             }
-            dbg_client_id("Size of sent packet: %d", (int)sizeof(yes));
+            dbg_client_id(client_id, "Size of sent packet: %d", (int)sizeof(yes));
+
+            // sending the important player stats
             if (send(thread_s, player, sizeof(*player), 0) == 0)
             {
                 log_err("send player_stats");
                 pthread_exit(NULL);
             }
-            dbg_client_id("Size of sent packet: %d", (int)sizeof(*player));
+            dbg_client_id(client_id, "Size of sent packet: %d", (int)sizeof(*player));
         }
     }
+    // END Player name check
+    // ------------------------------------
+
     pthread_exit(NULL);
 }

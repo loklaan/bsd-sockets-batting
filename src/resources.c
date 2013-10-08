@@ -4,6 +4,8 @@
 // functions for use in server/client batting
 // statistics system.
 // 
+// Function descriptions in the header.
+// 
 // Author: Lochlan Bunn
 //         n8509719
 //------------------------------------------------
@@ -16,7 +18,7 @@
 
 // =======---------=======
 //        Functions
-//
+// 
 
 scores_db *create_scores_db(int size)
 {
@@ -125,8 +127,13 @@ void destroy_client_details(client_details *details)
 {
     free(details);
 }
+//
+// -------=========-------
 
-// === Utils ===
+
+// =======---------=======
+//          Utils
+// 
 player_stats *search_player(scores_db *scores, char *name)
 {
     // linear search
@@ -179,6 +186,5 @@ void print_client_details(client_details *details)
     printf("\tUser: %s\n", details->user);
     printf("\tPass: %s\n", details->pass);
 }
-
 //
 // -------=========-------

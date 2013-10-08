@@ -12,7 +12,7 @@
 #ifndef RESOURCES_H_
 #define RESOURCES_H_
 
-#define MEMBUF 64 // struct member buff for structs strings
+#define STR_BUFFER 64
 
 #include <stdio.h>
 
@@ -21,8 +21,8 @@
 //
 typedef struct
 {
-    char name[MEMBUF];
-    char country[MEMBUF];
+    char name[STR_BUFFER];
+    char country[STR_BUFFER];
     int innings;
     int runs;
     int not_out;
@@ -32,8 +32,8 @@ typedef struct
 
 typedef struct
 {
-    char user[MEMBUF];
-    char pass[MEMBUF];
+    char user[STR_BUFFER];
+    char pass[STR_BUFFER];
 } client_details;
 
 typedef struct
@@ -56,13 +56,21 @@ typedef struct
 //
 
 /*
-Allocated space for the 'databases' based on some fixed size.
+Allocates space for the 'databases' based on some fixed number
+of elements
+
+PRE:
+POST: Returns a pointer to the allocated space.
+If error occurs, then returns NULL
  */
 scores_db *create_scores_db(int size);
 auths_db *create_auths_db(int size);
 
 /*
 Frees space used by the 'databases'.
+
+PRE: The database must exist / be initialised
+POST: Database memory and pointer freed
  */
 void destroy_scores_db(scores_db *scores);
 void destroy_auths_db(auths_db *auths);
@@ -100,8 +108,13 @@ PRE: client_details must have been initialized
 POST: client_details allocated memory and pointer freed
  */
 void destroy_client_details(client_details *details);
+//
+// -------=========-------
 
-// === Utils ===
+// =======---------=======
+//          Utils
+//
+
 /*
 Searches score_db for a player_stats instance with matching member name
 
@@ -121,6 +134,9 @@ int auth_match(auths_db *auths, char *user, char *pass);
 
 /*
 Prints things.
+
+PRE: Parameters must be initalised
+POST: Prints relevant information from the parameter
  */
 void print_player_stats(player_stats *stats);
 void print_client_details(client_details *details);

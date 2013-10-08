@@ -3,7 +3,7 @@
 // Purpose: Parse a formatted score or auth file and
 // return its content in a 'database' like object.
 // 
-// Function details in the header.
+// Function descriptions in the header.
 // 
 // Author: Lochlan Bunn
 //         n8509719
@@ -18,6 +18,17 @@
 #include "console.h"
 
 #define DELIMS " \t\r\n"
+#define FIELD_NAME 0
+#define FIELD_COUNTRY 1
+#define FIELD_INNINGS 2
+#define FIELD_RUNS 3
+#define FIELD_NOT_OUT 4
+#define FIELD_HIGHSCORE 5
+#define FIELD_HIGHSCORE_N_OUT 6
+
+// =======---------=======
+//        Functions
+//
 
 scores_db *parse_scores(FILE *file)
 {
@@ -39,25 +50,25 @@ scores_db *parse_scores(FILE *file)
 			{
 				switch (field_count)
 				{
-					case 0 :
+					case FIELD_NAME :
 					strcpy(player->name, field);
 					break;
-					case 1 :
+					case FIELD_COUNTRY :
 					strcpy(player->country, field);
 					break;
-					case 2 :
+					case FIELD_INNINGS :
 					player->innings = atoi(field);
 					break;
-					case 3 :
+					case FIELD_RUNS :
 					player->runs = atoi(field);
 					break;
-					case 4 :
+					case FIELD_NOT_OUT :
 					player->not_out = atoi(field);
 					break;
-					case 5 :
+					case FIELD_HIGHSCORE :
 					player->highscore = atoi(field);
 					break;
-					case 6 :
+					case FIELD_HIGHSCORE_N_OUT :
 					player->highscore_not_out = (field[0] == 'T') ? 1 : 0;
 					break;
 					default :
@@ -114,7 +125,13 @@ auths_db *parse_auths(FILE *file)
 	rewind(file);
 	return auths;
 }
+//
+// -------=========-------
 
+
+// =======---------=======
+//          Utils
+//
 int count_players(FILE *file)
 {
 	int count = 0;
@@ -141,3 +158,5 @@ int count_auths(FILE *file)
 	rewind(file);
 	return count;
 }
+//
+// -------=========-------
