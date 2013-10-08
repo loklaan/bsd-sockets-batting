@@ -10,8 +10,14 @@
 // 
 #ifdef NDEBUG
 #define debug(M, ...)
+#define dbg_client_cpid(M, ...)
+#define dbg_server(M, ...)
+#define dbg_client(M, ...)
 #else
 #define debug(M, ...) fprintf(stderr, "DEBUG %s:%d: " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define dbg_client_cpid(M, ...) msg_client_cpid(M, ##__VA_ARGS__)
+#define dbg_server(M, ...) msg_server(M, ##__VA_ARGS__)
+#define dbg_client(M, ...) msg_client(M, ##__VA_ARGS__)
 #endif
 
 #define clean_errno() (errno == 0 ? "None" : strerror(errno))
@@ -30,7 +36,6 @@
 
 #define check_debug(A, M, ...) if(!(A)) { debug(M, ##__VA_ARGS__); errno=0; goto error; }
 
-#endif
 //
 // ---------------------------------
 
@@ -39,10 +44,11 @@
 // ---------------------------------
 //  Message Prints
 //
-#define msg(M, ...) printf("[MSG] " M "...\n", ##__VA_ARGS__);
-#define msg_client_cpid(M, ...) printf("[CLIENT_MSG:%d] " M "...\n", getpid(), ##__VA_ARGS__);
-#define msg_server_cpid(M, ...) printf("[CLIENT_MSG:%d] " M "...\n", getpid(), ##__VA_ARGS__);
-#define msg_server(M, ...) printf("[SERVER_MSG] " M "...\n", ##__VA_ARGS__);
-#define msg_client(M, ...) printf("[CLIENT_MSG] " M "...\n", ##__VA_ARGS__);
+#define msg(M, ...) printf("[MSG] " M "...\n", ##__VA_ARGS__)
+#define msg_client_cpid(M, ...) printf("[CLIENT_MSG:%d] " M "...\n", getpid(), ##__VA_ARGS__)
+#define msg_server(M, ...) printf("[SERVER_MSG] " M "...\n", ##__VA_ARGS__)
+#define msg_client(M, ...) printf("[CLIENT_MSG] " M "...\n", ##__VA_ARGS__)
 //
 // ---------------------------------
+
+#endif

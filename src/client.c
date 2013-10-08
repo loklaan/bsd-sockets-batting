@@ -26,7 +26,7 @@
 
 int main(int argc, char const *argv[])
 {
-    msg("Started batting statistics client");
+    msg_client("Started batting statistics client");
 
     // initialise socket objects
     int sockfd, packet_bytes;
@@ -69,24 +69,24 @@ int main(int argc, char const *argv[])
     printf("\n");
     strcpy(details.pass, input);
     input[0] = '\0';
-    msg_client("Sending client authentication details")
+    dbg_client("Sending client authentication details");
     if (send(sockfd, &details, sizeof(details), 0) == -1)
     {
         log_err("send client details");
         exit(1);
     }
-    msg_client("Size of sent packet: %d", (int)sizeof(details));
+    dbg_client("Size of sent packet: %d", (int)sizeof(details));
     if ((packet_bytes = recv(sockfd, &boolean, PACKET_SIZE, 0)) == -1)
     {
         log_err("recv auth validity");
         exit(1);
     }
-    msg_client("Size of recieved packet: %d", packet_bytes);
+    dbg_client("Size of recieved packet: %d", packet_bytes);
     // continue, or force close
     if (boolean == NO)
     {
         msg_server("Invalid client authentication details");
-        msg("Quitting client");
+        msg_client("Quitting client");
         close(sockfd);
         return 0;
     } else if (boolean == YES)
@@ -106,7 +106,7 @@ int main(int argc, char const *argv[])
             log_err("send player name / quit input");
             exit(1);
         }
-        msg_client("Size of sent packet: %d", (int)sizeof(input));
+        dbg_client("Size of sent packet: %d", (int)sizeof(input));
         if (strcmp(input, quit) == 0)
         {
             msg_client("User has chosen to quit");
@@ -118,17 +118,17 @@ int main(int argc, char const *argv[])
             log_err("recv player name validity");
             exit(1);
         }
-        msg_client("Size of recieved packet: %d", packet_bytes);
+        dbg_client("Size of recieved packet: %d", packet_bytes);
         if (boolean == YES)
         {
-            msg_server("Player %s was found", input);
+            dbg_server("Player %s was found", input);
             player_stats stats;
             if ((packet_bytes = recv(sockfd, &stats, PACKET_SIZE, 0)) == -1)
-            { // TODO: screwing up sometimes....
+            {
                 log_err("recv player stats");
                 exit(1);
             }
-            msg_client("Size of recieved packet: %d", packet_bytes);
+            dbg_client("Size of recieved packet: %d", packet_bytes);
             print_player_stats(&stats);
         } else
         {

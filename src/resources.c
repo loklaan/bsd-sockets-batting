@@ -162,7 +162,7 @@ int auth_match(auths_db *auths, char *user, char *pass)
 
 void print_player_stats(player_stats *stats)
 {
-    printf("\nPlayer stats for %s:\n", stats->name);
+    printf("Player stats for %s:\n", stats->name);
     printf("\tCountry: %s\n", stats->country);
     printf("\tInnings: %d\n", stats->innings);
     printf("\tAvg Runs: %d\n", (stats->runs / stats->innings));
