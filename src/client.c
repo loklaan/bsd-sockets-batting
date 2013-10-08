@@ -130,8 +130,7 @@ int main(int argc, char const *argv[])
             }
             dbg_client("Size of recieved packet: %d", packet_bytes);
             print_player_stats(&stats);
-        } else
-        {
+        } else {
             msg_server("Player %s was not found", input);
         }
         input[0] = '\0';

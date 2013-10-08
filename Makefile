@@ -1,4 +1,4 @@
-CC=gcc -std=gnu99
+CC=gcc -std=gnu99 -pthread
 DEBUG_CFLAGS=-g
 SOURCE=src/parse.h src/parse.c src/resources.h src/resources.c src/console.h
 
@@ -8,6 +8,7 @@ debug: server-dbg client-dbg
 
 release: server-release client-release
 
+# CHANGE RUN TARGET FOR KITTENS
 run: release
 	/usr/bin/gnome-terminal --window --profile="Persistent" --title="Server" -e ./bin/server; /usr/bin/gnome-terminal --window --profile="Persistent" --title="Client" -e ./bin/client
 
