@@ -49,7 +49,7 @@ int main(int argc, char const *argv[])
         exit(FALSE);
     }
 
-    if ((client_s = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    if ((client_s = socket(AF_INET, SOCK_STREAM, 0)) == ERROR)
     {
         log_err("socket");
         exit(FALSE);
@@ -58,7 +58,7 @@ int main(int argc, char const *argv[])
     server_addr.sin_port = htons(PORT);
     server_addr.sin_addr = *((struct in_addr *) he->h_addr);
     bzero(&(server_addr.sin_zero), 8);
-    if (connect(client_s, (struct sockaddr *) &server_addr, sizeof(struct sockaddr)) == -1)
+    if (connect(client_s, (struct sockaddr *) &server_addr, sizeof(struct sockaddr)) == ERROR)
     {
         if (errno == ECONNREFUSED)
         {
@@ -91,7 +91,7 @@ int main(int argc, char const *argv[])
     input[0] = '\0';
 
     dbg_client("Sending client authentication details");
-    if (send(client_s, details, sizeof(*details), 0) == -1)
+    if (send(client_s, details, sizeof(*details), 0) == ERROR)
     {
         log_err("send client details");
         exit(FALSE);
@@ -99,8 +99,7 @@ int main(int argc, char const *argv[])
     dbg_client("Size of sent packet: %d", (int)sizeof(details));
     destroy_client_details(details);
     
-    
-    if ((packet_bytes = recv(client_s, &boolean, PACKET_SIZE, 0)) == -1)
+    if ((packet_bytes = recv(client_s, &boolean, PACKET_SIZE, 0)) == ERROR)
     {
         log_err("recv auth validity");
         exit(FALSE);
@@ -117,7 +116,7 @@ int main(int argc, char const *argv[])
     {
         msg_server("Valid client authentication details.");
     }
-    boolean = ERROR;
+    boolean = ERROR; // 'reset' for later use
     // END Enter/check authentication details
     // --------------------------------------
 
@@ -130,7 +129,7 @@ int main(int argc, char const *argv[])
         printf("\nEnter a players name, or q to quit: ");
         scanf("%s", input);
 
-        if (send(client_s, &input, sizeof(input), 0) == -1)
+        if (send(client_s, &input, sizeof(input), 0) == ERROR)
         {
             log_err("send player name / quit input");
             exit(FALSE);
@@ -144,7 +143,7 @@ int main(int argc, char const *argv[])
             close(client_s);
             break;
         }
-        if ((packet_bytes = recv(client_s, &boolean, PACKET_SIZE, 0)) == -1)
+        if ((packet_bytes = recv(client_s, &boolean, PACKET_SIZE, 0)) == ERROR)
         {
             log_err("recv player name validity");
             exit(FALSE);
@@ -156,29 +155,28 @@ int main(int argc, char const *argv[])
         {
             dbg_server("Player %s was found", input);
 
-            player_stats *stats;
-            stats = create_player_stats();
+            player_stats stats;
 
             // handshake with server BEFORE recieving player stats
-            if (send(client_s, &boolean, sizeof(boolean), 0) == -1)
+            if (send(client_s, &boolean, sizeof(boolean), 0) == ERROR)
             {
                 log_err("send player stats handshake");
                 exit(FALSE);
             }
             dbg_client("Size of sent packet: %d", (int)sizeof(input));
 
-            if ((packet_bytes = recv(client_s, stats, PACKET_SIZE, 0)) == -1)
+            if ((packet_bytes = recv(client_s, &stats, PACKET_SIZE, 0)) == ERROR)
             {
                 log_err("recv player stats");
                 exit(FALSE);
             }
             dbg_client("Size of recieved packet: %d", packet_bytes);
 
-            print_player_stats(stats);
-            destroy_player_stats(stats);
+            print_player_stats(&stats);
         } else {
             msg_server("Player %s was not found", input);
         }
+        boolean = ERROR; // 'reset' for later use
     }
     // END Query for player stats
     // --------------------------
