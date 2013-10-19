@@ -28,6 +28,7 @@ typedef struct
     int not_out;
     int highscore;
     int highscore_not_out;
+    int queries;
 } player_stats;
 
 typedef struct
@@ -116,10 +117,10 @@ void destroy_client_details(client_details *details);
 //
 
 /*
-Searches score_db for a player_stats instance with matching member name
+Is not thread safe. Searches score_db for a player_stats instance with matching member name. Also increments successful query count on matching player.
 
 PRE: scores_db must be initialized
-POST: Returns the pointer to the matching player_stats, or a NULL if not found
+POST: Returns the pointer to the matching player_stats, increments matched player query count, or returns a NULL if not found
  */
 player_stats *search_player(scores_db *scores, char *name);
 

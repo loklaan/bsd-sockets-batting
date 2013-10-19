@@ -93,13 +93,17 @@ player_stats *create_player_stats(void)
         log_err("malloc");
         return NULL;
     }
-    stats->name[0] = '\0';
-    stats->country[0] = '\0';
+    for (int i = 0; i < STR_BUFFER; ++i)
+    {
+        stats->name[i] = '\0';
+        stats->country[i] = '\0';
+    }
     stats->innings = 0;
     stats->runs = 0;
     stats->not_out = 0;
     stats->highscore = 0;
     stats->highscore_not_out = 0;
+    stats->queries = 0;
 
     return stats;
 }
@@ -117,8 +121,11 @@ client_details *create_client_details(void)
         log_err("malloc");
         return NULL;
     }
-    details->user[0] = '\0';
-    details->pass[0] = '\0';
+    for (int i = 0; i < STR_BUFFER; ++i)
+    {
+        details->user[i] = '\0';
+        details->pass[i] = '\0';
+    }
 
     return details;
 }
@@ -141,7 +148,7 @@ player_stats *search_player(scores_db *scores, char *name)
     {
         if (strcmp((scores->db[i])->name, name) == 0)
         {
-            scores->last_found_index = i;
+            (scores->db[i])->queries++;
             return scores->db[i];
         }
     }
