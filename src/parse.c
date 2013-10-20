@@ -2,9 +2,9 @@
 // File: parse.c
 // Purpose: Parse a formatted score or auth file and
 // return its content in a 'database' like object.
-// 
+//
 // Function descriptions in the header.
-// 
+//
 // Author: Lochlan Bunn
 //         n8509719
 //------------------------------------------------

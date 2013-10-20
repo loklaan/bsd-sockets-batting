@@ -2,7 +2,7 @@
 // File: client.c
 // Purpose: Client implementation for the Batting Stats system.
 // Uses BSD sockets.
-// 
+//
 // Author: Lochlan Bunn
 //         n8509719
 //------------------------------------------------
@@ -98,7 +98,7 @@ int main(int argc, char const *argv[])
     }
     dbg_client("Size of sent packet: %d", (int)sizeof(details));
     destroy_client_details(details);
-    
+
     if ((packet_bytes = recv(client_s, &boolean, PACKET_SIZE, 0)) == ERROR)
     {
         log_err("recv auth validity");
@@ -180,7 +180,7 @@ int main(int argc, char const *argv[])
     }
     // END Query for player stats
     // --------------------------
-    
+
     msg_client("Closing client");
     return 0;
 }

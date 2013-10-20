@@ -3,7 +3,7 @@
 // Purpose: Data structures and corresponding
 // functions for use in server/client batting
 // statistics system.
-// 
+//
 // Author: Lochlan Bunn
 //         n8509719
 //------------------------------------------------

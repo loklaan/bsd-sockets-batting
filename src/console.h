@@ -6,7 +6,7 @@
 // Author: Lochlan Bunn
 //         n8509719
 // -----------------------------------------------
-// 
+//
 
 #ifndef CONSOLE_H_
 #define CONSOLE_H_
@@ -18,7 +18,7 @@
 // =======---------=======
 //       Debug Macros
 // Disabled with -DNDEBUG flag
-// 
+//
 #ifdef NDEBUG
 #define debug(M, ...)
 #define dbg_client_id(M, ...)
@@ -36,7 +36,7 @@
 // =======---------=======
 //    Error/Info Macros
 // Some may not be used in this project
-// 
+//
 #define clean_errno() (errno == 0 ? "None" : strerror(errno))
 #define log_err(M, ...) fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
 #define log_warn(M, ...) fprintf(stderr, "[WARN] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
@@ -52,7 +52,7 @@
 // =======---------=======
 //     Message Macros
 // Specific to this project
-// 
+//
 #define msg(M, ...) printf("[MSG] " M "...\n", ##__VA_ARGS__)
 #define msg_client_id(ID, M, ...) printf("[CLIENT_MSG:ID_%d] " M "...\n", ID, ##__VA_ARGS__)
 #define msg_server(M, ...) printf("[SERVER_MSG] " M "...\n", ##__VA_ARGS__)

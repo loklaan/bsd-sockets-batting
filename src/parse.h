@@ -2,7 +2,7 @@
 // File: parse.h
 // Purpose: Parse a formatted score or auth file and
 // return its content in a 'database' like object.
-// 
+//
 // Author: Lochlan Bunn
 //         n8509719
 //------------------------------------------------
