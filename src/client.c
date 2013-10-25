@@ -27,6 +27,28 @@
 #define FALSE 1
 #define ERROR -1
 
+// Macro that expands for error checking and debug logging for send()
+#define server_send(sockfd, data, errmsg)\
+    if (send(sockfd, data, sizeof(*(data)), 0) == ERROR)\
+    {\
+        log_err("send %s", errmsg);\
+        exit(ERROR);\
+    }\
+    dbg_client("Size of sent packet: %d", (int)sizeof(*(data)));
+
+// Another macro that expands for error checking and debug logging for recv()
+#define server_recv(sockfd, data, errmsg, recv_size)\
+    if ((recv_size = recv(sockfd, data, PACKET_SIZE, 0)) == -1)\
+    {\
+        log_err("recv %s", errmsg);\
+        exit(ERROR);\
+    } else if (recv_size == 0)\
+    {\
+        msg_client("Server has shutdown");\
+        exit(0);\
+    }\
+    dbg_client("Size of received packet: %d", recv_size);
+
 /*
 Client connects to a server will ask for user Authentication details,
 that will be sent to and verified by the server. The connection will
@@ -40,7 +62,7 @@ int main(int argc, char const *argv[])
     msg_client("Started batting statistics client");
 
     // initialise socket objects
-    int client_s, packet_bytes;
+    int client_s, recv_size;
     struct hostent *he;
     struct sockaddr_in server_addr;
     if ((he = gethostbyname(HOST)) == NULL)
@@ -91,20 +113,10 @@ int main(int argc, char const *argv[])
     input[0] = '\0';
 
     dbg_client("Sending client authentication details");
-    if (send(client_s, details, sizeof(*details), 0) == ERROR)
-    {
-        log_err("send client details");
-        exit(FALSE);
-    }
-    dbg_client("Size of sent packet: %d", (int)sizeof(details));
+    server_send(client_s, details, "client details")
     destroy_client_details(details);
 
-    if ((packet_bytes = recv(client_s, &boolean, PACKET_SIZE, 0)) == ERROR)
-    {
-        log_err("recv auth validity");
-        exit(FALSE);
-    }
-    dbg_client("Size of recieved packet: %d", packet_bytes);
+    server_recv(client_s, &boolean, "auth validity", recv_size)
 
     if (boolean == NO)
     {
@@ -129,12 +141,7 @@ int main(int argc, char const *argv[])
         printf("\nEnter a players name, or q to quit: ");
         scanf("%s", input);
 
-        if (send(client_s, &input, sizeof(input), 0) == ERROR)
-        {
-            log_err("send player name / quit input");
-            exit(FALSE);
-        }
-        dbg_client("Size of sent packet: %d", (int)sizeof(input));
+        server_send(client_s, &input, "player/quit input")
 
         // Close client connection and break to exit, if user quits
         if (strcmp(input, quit) == 0)
@@ -143,12 +150,7 @@ int main(int argc, char const *argv[])
             close(client_s);
             break;
         }
-        if ((packet_bytes = recv(client_s, &boolean, PACKET_SIZE, 0)) == ERROR)
-        {
-            log_err("recv player name validity");
-            exit(FALSE);
-        }
-        dbg_client("Size of recieved packet: %d", packet_bytes);
+        server_recv(client_s, &boolean, "player name validity", recv_size)
 
         // receive the server-found player stats and print them
         if (boolean == YES)
@@ -158,19 +160,9 @@ int main(int argc, char const *argv[])
             player_stats stats;
 
             // handshake with server BEFORE recieving player stats
-            if (send(client_s, &boolean, sizeof(boolean), 0) == ERROR)
-            {
-                log_err("send player stats handshake");
-                exit(FALSE);
-            }
-            dbg_client("Size of sent packet: %d", (int)sizeof(input));
+            server_send(client_s, &boolean, "player stats handshake")
 
-            if ((packet_bytes = recv(client_s, &stats, PACKET_SIZE, 0)) == ERROR)
-            {
-                log_err("recv player stats");
-                exit(FALSE);
-            }
-            dbg_client("Size of recieved packet: %d", packet_bytes);
+            server_recv(client_s, &stats, "player_stats", recv_size)
 
             print_player_stats(&stats);
         } else {
